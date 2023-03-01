@@ -1,22 +1,17 @@
 # aws-infra
 
-We have 4 main files here
+We have four main files for our Terraform configuration. 
 
-The provider.tf contains the provider and region details
+1. The "provider.tf" file specifies the provider and region details. 
+2. The "variables.tf" file defines all the variables, their types, and default values. 
+3. The "main.tf" file lists all the resources that need to be created. 
+4. The "variables.tfvars" file is used to pass values like CIDR blocks and regions via the command prompt.
 
-The variables.tf contains all the variables, their types and their default values.
+To run the Terraform configuration, we need to use three commands. 
+1. First, we use "terraform init" to prepare the backend processes for creation. 
+2. Next, we use "terraform apply" to create all the resources listed in the configuration files, with a confirmation prompt before creation. 
+3. Finally, we use "terraform destroy" to remove all the created resources.
 
-The main.tf contains all the resources which are to be created.
-
-The variables.tfvars is a file which passed in the command prompt to take the values like cidr blocks region etc.
-
-To run the terraform configuration files, we have to run the following commands
-1. **terraform init**  -  this command initializes the backend processes and makes the ground ready for creation.
-2. **terraform apply** - this command creates all the resources listed in the config files. Before creation a confirmation is asked.
-3. **Terraform destroy** - this command destroys all the created and active resources
-
-Here, we have created 1 vpc, 3 private subnets and 3 public subnets in different availability zones but same region, 1 public route table, one private route table and 1 internet gateway.
-
-We have included .tfvars and .terraform.lock.hcl and terraform.state in the gitignore file.
-
-
+In this configuration, we have created a VPC, three private subnets, and three public subnets in different availability zones within the same region. 
+We have also created one public route table, one private route table, and one internet gateway. 
+To keep our project organized, we have added ".tfvars", ".terraform.lock.hcl", and "terraform.state" to our gitignore file.
