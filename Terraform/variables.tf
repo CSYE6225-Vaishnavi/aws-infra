@@ -87,3 +87,17 @@ variable "ami_id" {
 data "aws_availability_zones" "available" {
   state = "available"
 }
+
+
+variable "db_username" {
+  #default = "myuser"
+}
+
+variable "db_password" {
+  #default = "mypassword"
+}
+
+variable "db_host" {
+  #default = "hostname"
+}
+
