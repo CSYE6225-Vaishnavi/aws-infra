@@ -101,3 +101,6 @@ variable "db_host" {
   #default = "hostname"
 }
 
+variable "domain_name"{
+  
+}
