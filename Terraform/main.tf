@@ -201,7 +201,6 @@ resource "aws_security_group" "database" {
     security_groups = [aws_security_group.instance.id]
   }
 
-
   egress {
     from_port   = 0
     to_port     = 0
@@ -225,35 +224,64 @@ resource "aws_iam_policy" "webapp_s3_policy" {
           "s3:GetObject",
           "s3:PutObject",
           "s3:DeleteObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "cloudwatch:GetMetricStatistics",
+          "cloudwatch:GetMetricData",
+          "cloudwatch:ListMetrics",
+          "cloudwatch:PutMetricData",
+          "ec2:DescribeTags"
+
         ]
         Effect = "Allow"
         Resource = [
           "arn:aws:s3:::my-bucket-${random_id.random.hex}",
-          "arn:aws:s3:::my-bucket-${random_id.random.hex}/*",
+          "arn:aws:s3:::my-bucket-${random_id.random.hex}/*"
         ]
       },
     ]
   })
 }
 
+
+# resource "aws_iam_policy" "cloudwatch_agent_policy" {
+#   name = "CloudWatchAgentPolicy"
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Action = [
+#           "cloudwatch:GetMetricStatistics",
+#           "cloudwatch:GetMetricData",
+#           "cloudwatch:ListMetrics",
+#           "cloudwatch:PutMetricData",
+#           "logs:CreateLogGroup",
+#           "logs:CreateLogStream",
+#           "logs:PutLogEvents"
+#         ]
+#         Effect   = "Allow"
+#         Resource = ["*"]
+#       },
+#     ]
+#   })
+# }
+
 resource "aws_s3_bucket" "private_s3_bucket" {
   bucket        = "my-bucket-${random_id.random.hex}"
   acl           = "private"
   force_destroy = true
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-    }
-  }
-
-
   tags = {
     Environment = "dev"
     Name        = "private_s3_bucket"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "example" {
+  bucket = aws_s3_bucket.private_s3_bucket.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
   }
 }
 
@@ -312,7 +340,12 @@ resource "aws_db_parameter_group" "postgres_params" {
   }
 }
 
+resource "aws_db_subnet_group" "private_rds_subnet_group" {
+  name        = "private-rds-subnet-group"
+  description = "Private subnet group for RDS instances"
+  subnet_ids  = [aws_subnet.private-1.id, aws_subnet.private-2.id]
 
+}
 
 # Create the RDS instance
 resource "aws_db_instance" "rds_instance" {
@@ -325,7 +358,7 @@ resource "aws_db_instance" "rds_instance" {
   db_name                = var.db_host
   username               = var.db_username
   password               = var.db_password
-  db_subnet_group_name   = "private-rds-subnet-group"
+  db_subnet_group_name   = aws_db_subnet_group.private_rds_subnet_group.name
   publicly_accessible    = false
   skip_final_snapshot    = true
   parameter_group_name   = aws_db_parameter_group.postgres_params.name
@@ -336,11 +369,7 @@ resource "aws_db_instance" "rds_instance" {
   }
 }
 
-resource "aws_db_subnet_group" "private_rds_subnet_group" {
-  name        = "private-rds-subnet-group"
-  description = "Private subnet group for RDS instances"
-  subnet_ids  = [aws_subnet.private-1.id, aws_subnet.private-2.id]
-}
+
 
 
 resource "aws_instance" "Terraform_Managed" {
@@ -410,6 +439,13 @@ resource "aws_iam_role" "ec2_csye6225_role" {
           Service = "ec2.amazonaws.com"
         }
       },
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "logs.${data.aws_region.current.name}.amazonaws.com"
+        }
+      }
     ]
   })
 
@@ -418,8 +454,16 @@ resource "aws_iam_role" "ec2_csye6225_role" {
   }
 }
 
+data "aws_region" "current" {}
+
 resource "aws_iam_role_policy_attachment" "webapp_s3_policy_attachment" {
   policy_arn = aws_iam_policy.webapp_s3_policy.arn
+  role       = aws_iam_role.ec2_csye6225_role.name
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_agent_policy_attachment" {
+//  name       = "cloudwatch_policy_attachment"
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
   role       = aws_iam_role.ec2_csye6225_role.name
 }
 
@@ -428,6 +472,9 @@ resource "aws_iam_instance_profile" "ec2_instance_profile" {
 
   role = aws_iam_role.ec2_csye6225_role.name
 }
+
+
+
 
 output "public_ip" {
   value = aws_instance.Terraform_Managed[0].public_ip
@@ -448,3 +495,4 @@ resource "aws_route53_record" "web" {
     aws_instance.Terraform_Managed[0].public_ip,
   ]
 }
+
