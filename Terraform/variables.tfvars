@@ -9,7 +9,7 @@ private_subnet2_cidr = "10.0.5.0/24"
 private_subnet3_cidr = "10.0.6.0/24"
 private_routetable_cidr = "0.0.0.0/0"
 public_routetable_cidr = "0.0.0.0/0"
-ami_id = "ami-032d53dcc6fae64be"
+ami_id = "ami-0f7f3f2c49e6b7506"
 domain_name = "dev.vaishnaviyadamreddy.me"
 
 //amazonlinux-ami = "ami-0dfcb1ef8550277af"
