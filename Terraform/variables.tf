@@ -22,7 +22,6 @@ variable "cidr_block" {
 variable "profile" {
   default = "dev"
     type = string
-  
 }
 
 variable "public_subnet1_cidr" {
@@ -103,4 +102,8 @@ variable "db_host" {
 
 variable "domain_name"{
   
+}
+
+variable "account_id"{
+  type = string
 }
